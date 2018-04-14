@@ -1,12 +1,14 @@
 import * as React from 'react';
+import { AppBar, TextField, RaisedButton, DatePicker, Checkbox, Paper } from 'material-ui';
+import { Table, TableHeader, TableRow, TableHeaderColumn, TableBody, TableRowColumn } from 'material-ui';
 
 class Task {
   id: number;
   user: string;
   title: string;
-  deadline: Date|null;
+  deadline: Date|undefined;
   checked: boolean;
-  constructor(id: number, user: string, title: string, deadline: Date|null) {
+  constructor(id: number, user: string, title: string, deadline: Date|undefined) {
     this.id = id;
     this.user = user;
     this.title = title;
@@ -16,59 +18,53 @@ class Task {
 }
 
 interface AddButtonProps {
-  addTask(user: string, title: string, deadline: Date|null): void;
+  addTask(user: string, title: string, deadline: Date|undefined): void;
 }
 interface AddButtonStates {
-  isOpenNewPanel: boolean;
   title: string;
-  deadline: Date|null;
+  deadline: Date|undefined;
 }
 class AddButton extends React.Component<AddButtonProps, AddButtonStates> {
   constructor(props: AddButtonProps) {
     super(props);
     this.state = {
-      isOpenNewPanel: false,
       title: '',
-      deadline: null,
+      deadline: undefined,
     };
-    this.handleClickTogglePanel = this.handleClickTogglePanel.bind(this);
     this.handleClickAdd = this.handleClickAdd.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-  }
-
-  handleClickTogglePanel() {
-    this.setState({
-      isOpenNewPanel: this.state.isOpenNewPanel ? false : true,
-    });
+    this.handleChangeTitle = this.handleChangeTitle.bind(this);
+    this.handleChangeDate = this.handleChangeDate.bind(this);
   }
 
   handleClickAdd(): void {
     this.props.addTask('user', this.state.title, this.state.deadline);
+    this.setState({
+      title: '',
+      deadline: undefined,
+    });
   }
 
-  handleChange(ev: React.ChangeEvent<HTMLInputElement>) {
+  handleChangeTitle(event: React.ChangeEvent<Element>, newValue: string) {
     this.setState({
-        title: ev.currentTarget.value
+        title: newValue
+    });
+  }
+  handleChangeDate(event: React.ChangeEvent<Element>, newValue: Date) {
+    this.setState({
+        deadline: newValue
     });
   }
 
   render() {
-    if (this.state.isOpenNewPanel) {
-      return (
-        <div>
-          <button onClick={this.handleClickTogglePanel}>[-]</button>
-          <input type="text" value={this.state.title} onChange={this.handleChange} />
-          <input type="text" onChange={this.handleChange} />
-          <button onClick={this.handleClickAdd}>add</button>
-        </div>
-      );
-    } else {
-      return (
-        <div>
-          <button onClick={this.handleClickTogglePanel}>[+]</button>
-        </div>
-      );
-    }
+    return (
+      <div>
+        <Paper>
+          <TextField hintText="new task name" value={this.state.title} onChange={this.handleChangeTitle} />
+          <DatePicker hintText="dead line" value={this.state.deadline} onChange={this.handleChangeDate} />
+          <RaisedButton label="add"  onClick={this.handleClickAdd} />
+        </Paper>
+      </div>
+    );
   }
 }
 
@@ -92,30 +88,46 @@ class Dashboard extends React.Component<DashboardProps, DashboardStates> {
     this.addTask = this.addTask.bind(this);
   }
 
-  addTask(user: string, title: string, deadline: Date|null) {
+  addTask(user: string, title: string, deadline: Date|undefined) {
     let newId: number = this.state.tasks[this.state.tasks.length - 1].id + 1;
     let newTask: Task = new Task (newId, user, title, deadline);
     this.setState({
       tasks: this.state.tasks.concat(newTask)
     });
   }
+  handleCheck(index: number, checked: boolean) {
+    let tasks: Task[] = this.state.tasks;
+    tasks[index].checked = checked;
+    this.setState({
+      tasks: tasks
+    });
+  }
 
   render() {
-    const taskList = this.state.tasks.map((task) => {
-      return (
-        <li key={task.id}>
-          {task.id} : {task.title} : 
-          {task.deadline == null ? '' : task.deadline.toDateString()} : {task.checked ? '[ ]' : '[X]'}
-        </li>
-      );
-    });
-
     return (
       <div>
+        <AppBar title="Todo" showMenuIconButton={false}/>
         <AddButton addTask={this.addTask} />
-        <ul>
-          {taskList}
-        </ul>
+        <Table>
+          <TableHeader displaySelectAll={false}>
+            <TableRow>
+              <TableHeaderColumn>Status</TableHeaderColumn>
+              <TableHeaderColumn>Title</TableHeaderColumn>
+              <TableHeaderColumn>Deadline</TableHeaderColumn>
+            </TableRow>
+          </TableHeader>
+          <TableBody displayRowCheckbox={false}>
+            {this.state.tasks.map((task, index) => {
+              return (
+                <TableRow key={index} rowNumber={index}>
+                  <TableRowColumn><Checkbox key={index} checked={task.checked} onCheck={(event: React.MouseEvent<Checkbox>, checked: boolean) => this.handleCheck(index, checked)} /></TableRowColumn>
+                  <TableRowColumn>{task.title}</TableRowColumn>
+                  <TableRowColumn>{task.deadline == null ? '' : task.deadline.toDateString()}</TableRowColumn>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       </div>
     );
   }
