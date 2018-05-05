@@ -23,6 +23,8 @@ interface AddButtonProps {
 interface AddButtonStates {
   title: string;
   deadline: Date|undefined;
+  err_title: string;
+  err_deadline: string;
 }
 class AddButton extends React.Component<AddButtonProps, AddButtonStates> {
   constructor(props: AddButtonProps) {
@@ -30,6 +32,8 @@ class AddButton extends React.Component<AddButtonProps, AddButtonStates> {
     this.state = {
       title: '',
       deadline: undefined,
+      err_title: '',
+      err_deadline: '',
     };
     this.handleClickAdd = this.handleClickAdd.bind(this);
     this.handleChangeTitle = this.handleChangeTitle.bind(this);
@@ -37,10 +41,20 @@ class AddButton extends React.Component<AddButtonProps, AddButtonStates> {
   }
 
   handleClickAdd(): void {
+    this.setState({
+      err_title: this.state.title === '' ? '必須！' : '',
+      err_deadline: this.state.deadline === undefined ? '必須！' : ''
+    });
+    if (this.state.title === '' || this.state.deadline === undefined) {
+      return;
+    }
+
     this.props.addTask('user', this.state.title, this.state.deadline);
     this.setState({
       title: '',
       deadline: undefined,
+      err_title: '',
+      err_deadline: '',
     });
   }
 
@@ -59,8 +73,8 @@ class AddButton extends React.Component<AddButtonProps, AddButtonStates> {
     return (
       <div>
         <Paper>
-          <TextField hintText="new task name" value={this.state.title} onChange={this.handleChangeTitle} />
-          <DatePicker hintText="dead line" value={this.state.deadline} onChange={this.handleChangeDate} />
+          <TextField hintText="new task name" value={this.state.title} errorText={this.state.err_title} onChange={this.handleChangeTitle} />
+          <DatePicker hintText="dead line" value={this.state.deadline} errorText={this.state.err_deadline} onChange={this.handleChangeDate} />
           <RaisedButton label="add"  onClick={this.handleClickAdd} />
         </Paper>
       </div>
